@@ -4,7 +4,7 @@ import Sidebar from "./Sidebar";
 import Chat from "./Chat";
 import Pusher from "pusher-js";
 import axios from "./axios";
-import Constants from "./constants.js";
+import Config from "./config.js";
 
 function App() {
   const [messages, setMessages] = useState([]);
@@ -15,8 +15,8 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const pusher = new Pusher(Constants.PUSHER_KEY, {
-      cluster: Constants.PUSHER_CLUSTER,
+    const pusher = new Pusher(Config.PUSHER_KEY, {
+      cluster: Config.PUSHER_CLUSTER,
     });
 
     const channel = pusher.subscribe("messages");
