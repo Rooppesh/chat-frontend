@@ -10,12 +10,13 @@ import {
   InsertEmoticon,
   Mic,
 } from "@material-ui/icons";
+import Pusher from "pusher-js";
+import Config from "./config.js";
 import axios from "./axios";
 
-function Chat({ messages }) {
+function Chat() {
   const [input, setInput] = useState("");
   const { roomId } = useParams();
-  const [seed, setSeed] = useState("");
   const [roomName, setRoomName] = useState("");
 
   useEffect(() => {
@@ -26,14 +27,10 @@ function Chat({ messages }) {
     }
   }, []);
 
-  useEffect(() => {
-    setSeed(Math.floor(Math.random() * 5000));
-  });
-
   const sendMessage = async (e) => {
     e.preventDefault();
     await axios.post("/v1/message/create", {
-      roomId: 1,
+      roomId: String(roomId),
       message: input,
       name: "Rooppesh",
       timestamp: new Date().toUTCString(),
@@ -41,6 +38,32 @@ function Chat({ messages }) {
     });
     setInput("");
   };
+
+  const [messages, setMessages] = useState([]);
+  useEffect(() => {
+    axios.get("/v1/message/sync?roomId=" + roomId).then((response) => {
+      setMessages(response.data);
+    });
+  }, []);
+
+  useEffect(() => {
+    const pusher = new Pusher(Config.PUSHER_KEY, {
+      cluster: Config.PUSHER_CLUSTER,
+    });
+
+    const channel = pusher.subscribe("messages");
+    channel.bind("inserted", (newMessages) => {
+      setMessages([...messages, newMessages]);
+    });
+
+    return () => {
+      channel.unbind_all();
+      channel.unsubscribe();
+    };
+  }, [messages]);
+
+  console.log(messages);
+
   return (
     <div className="chat">
       <div className="chat__header">
